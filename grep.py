@@ -72,17 +72,17 @@ def _matches(state: _State, line: str) -> bool:
     if state.options.ignore_case:
         line = line.lower()
     if state.options.entire_lines:
-        return state.pattern == line
+        match = state.pattern == line
     else:
-        return state.pattern in line
+        match = state.pattern in line
+    return not match if state.options.invert else match
 
 def _calc_result(state: _State, match: bool, line: str, cnt: int, file_name: str) -> Optional[str]:
     """
     Potentially save result, depending on the options.
     """
     result = None
-    # The invert option means we report what doesn't match.
-    if (match and not state.options.invert) or (not match and state.options.invert):
+    if match:
         if state.options.only_names:
             return file_name + '\n'  # newline so that multiple lines work right
         result = ''

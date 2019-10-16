@@ -45,11 +45,11 @@ def _run(state: _State) -> str:
     results: List[str] = []
     for file_name in state.files:
         with open(file_name) as f:
-            # lines is a list of tuples. Each tuple is (line number, line text).
+            # Each element in lines is a tuple: (line number, line text).
             # The line numbers start at 0.
-            lines = list(enumerate(f.readlines()))
+            lines = enumerate(f.readlines())
             matches = filter(lambda nxt: _matches(state, nxt[1]), lines)
-            results += list(map(lambda nxt: _fmt_match(state, nxt, file_name), matches))
+            results += map(lambda nxt: _fmt_match(state, nxt, file_name), matches)
     if state.options.only_names:
         results = _dedup(results)
     return ''.join(results)
@@ -78,11 +78,11 @@ def _fmt_match(state: _State, line_tuple: Tuple[int, str], file_name: str) -> st
     """
     if state.options.only_names:
         return file_name + '\n' # newline so that multiple lines work right
-    (i, txt) = line_tuple
+    (line_num, line_txt) = line_tuple
     result = ''
     if len(state.files) > 1:
         result += f"{file_name}:"
     if state.options.line_numbers:
-        result += f"{i + 1}:"
-    result += txt
+        result += f"{line_num + 1}:" # zero-based
+    result += line_txt
     return result

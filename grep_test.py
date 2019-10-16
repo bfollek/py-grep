@@ -38,11 +38,17 @@ Restore us, and regain the blissful Seat,
 Sing Heav'nly Muse, that on the secret top
 Of Oreb, or of Sinai, didst inspire
 That Shepherd, who first taught the chosen Seed'''
-FILENAMES = [
+
+SAMELINEREPEATSFILENAME = 'same-line-repeats.txt'
+SAMELINEREPEATSCONTENTS = '''samelinerepeats
+samelinerepeats
+samelinerepeats'''
+ORIGINAL_FILENAMES = [
     ILIADFILENAME,
     MIDSUMMERNIGHTFILENAME,
     PARADISELOSTFILENAME,
 ]
+FILENAMES = ORIGINAL_FILENAMES + [SAMELINEREPEATSFILENAME]
 FILES = {}
 
 
@@ -103,6 +109,7 @@ class GrepTest(unittest.TestCase):
         create_file(ILIADFILENAME, ILIADCONTENTS)
         create_file(MIDSUMMERNIGHTFILENAME, MIDSUMMERNIGHTCONTENTS)
         create_file(PARADISELOSTFILENAME, PARADISELOSTCONTENTS)
+        create_file(SAMELINEREPEATSFILENAME, SAMELINEREPEATSCONTENTS)
         self.maxDiff = None
 
     @classmethod
@@ -110,6 +117,7 @@ class GrepTest(unittest.TestCase):
         remove_file(ILIADFILENAME)
         remove_file(MIDSUMMERNIGHTFILENAME)
         remove_file(PARADISELOSTFILENAME)
+        remove_file(SAMELINEREPEATSFILENAME)
         # Restore builtin open()
         builtins.open = builtins.oldopen
 
@@ -194,12 +202,12 @@ class GrepTest(unittest.TestCase):
 
     def test_multiple_files_one_match_no_flags(self):
         self.assertMultiLineEqual(
-            grep("Agamemnon", "", FILENAMES),
+            grep("Agamemnon", "", ORIGINAL_FILENAMES),
             "iliad.txt:Of Atreus, Agamemnon, King of men.\n")
 
     def test_multiple_files_several_matches_no_flags(self):
         self.assertMultiLineEqual(
-            grep("may", "", FILENAMES),
+            grep("may", "", ORIGINAL_FILENAMES),
             "midsummer-night.txt:Nor how it may concern my modesty,\n"
             "midsummer-night.txt:But I beseech your grace that I may know\n"
             "midsummer-night.txt:The worst that may befall me in this case,\n")
@@ -210,11 +218,11 @@ class GrepTest(unittest.TestCase):
             "midsummer-night.txt:6:The worst that may befall me in this case,"
             "\nparadise-lost.txt:2:Of that Forbidden Tree, whose mortal tast\n"
             "paradise-lost.txt:6:Sing Heav'nly Muse, that on the secret top\n")
-        self.assertMultiLineEqual(grep("that", "-n", FILENAMES), expected)
+        self.assertMultiLineEqual(grep("that", "-n", ORIGINAL_FILENAMES), expected)
 
     def test_multiple_files_one_match_print_file_names_flag(self):
         self.assertMultiLineEqual(
-            grep("who", "-l", FILENAMES),
+            grep("who", "-l", ORIGINAL_FILENAMES),
             ILIADFILENAME + '\n' + PARADISELOSTFILENAME + '\n')
 
     def test_multiple_files_several_matches_case_insensitive_flag(self):
@@ -229,11 +237,11 @@ class GrepTest(unittest.TestCase):
             "paradise-lost.txt:Brought Death into the World, and all our woe,"
             "\nparadise-lost.txt:Restore us, and regain the blissful Seat,\n"
             "paradise-lost.txt:Sing Heav'nly Muse, that on the secret top\n")
-        self.assertMultiLineEqual(grep("TO", "-i", FILENAMES), expected)
+        self.assertMultiLineEqual(grep("TO", "-i", ORIGINAL_FILENAMES), expected)
 
     def test_multiple_files_several_matches_inverted_flag(self):
         self.assertMultiLineEqual(
-            grep("a", "-v", FILENAMES),
+            grep("a", "-v", ORIGINAL_FILENAMES),
             "iliad.txt:Achilles sing, O Goddess! Peleus' son;\n"
             "iliad.txt:The noble Chief Achilles from the son\n"
             "midsummer-night.txt:If I refuse to wed Demetrius.\n"
@@ -241,24 +249,24 @@ class GrepTest(unittest.TestCase):
 
     def test_multiple_files_one_match_match_entire_lines_flag(self):
         self.assertMultiLineEqual(
-            grep("But I beseech your grace that I may know", "-x", FILENAMES),
+            grep("But I beseech your grace that I may know", "-x", ORIGINAL_FILENAMES),
             "midsummer-night.txt:But I beseech your grace that I may know\n")
 
     def test_multiple_files_one_match_multiple_flags(self):
         self.assertMultiLineEqual(
             grep("WITH LOSS OF EDEN, TILL ONE GREATER MAN",  "-n -i -x",
-                 FILENAMES),
+                 ORIGINAL_FILENAMES),
             "paradise-lost.txt:4:With loss of Eden, till one greater Man\n")
 
     def test_multiple_files_no_matches_various_flags(self):
         self.assertMultiLineEqual(
-            grep("Frodo", "-n -l -x -i", FILENAMES),
+            grep("Frodo", "-n -l -x -i", ORIGINAL_FILENAMES),
             ""
         )
 
     def test_multiple_files_several_matches_file_flag_takes_precedence(self):
         self.assertMultiLineEqual(
-            grep("who", "-n -l", FILENAMES),
+            grep("who", "-n -l", ORIGINAL_FILENAMES),
             ILIADFILENAME + '\n' + PARADISELOSTFILENAME + '\n')
 
     def test_multiple_files_several_matches_inverted_match_entire_lines(self):
@@ -289,8 +297,22 @@ class GrepTest(unittest.TestCase):
             "\n"
         )
         self.assertMultiLineEqual(
-            grep("Illustrious into Ades premature,", "-x -v", FILENAMES),
+            grep("Illustrious into Ades premature,", "-x -v", ORIGINAL_FILENAMES),
             expected
+        )
+
+    def test_one_file_same_line_repeats_print_file_names_flag(self):
+        self.assertMultiLineEqual(
+            grep("linerep", "-l", [SAMELINEREPEATSFILENAME]),
+            SAMELINEREPEATSFILENAME + '\n'
+        )
+
+    def test_one_file_same_line_repeats_no_flags(self):
+        self.assertMultiLineEqual(
+            grep("linerep", "", [SAMELINEREPEATSFILENAME]),
+            "samelinerepeats\n"
+            "samelinerepeats\n"
+            "samelinerepeats\n"
         )
 
 

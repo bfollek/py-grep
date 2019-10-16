@@ -10,7 +10,7 @@ class Grepper:
             self._pattern += '\n' # lines have trailing newlines
 
     def run(self) -> str:
-        results = {} # dict gives us ordered keys, no dups
+        results = []
         for file_name in self._files:
             with open(file_name) as f:
                 cnt = 0
@@ -22,8 +22,19 @@ class Grepper:
                     match = self._matches(line)
                     result = self._calc_result(match, line, cnt, file_name)
                     if result:
-                        results[result] = True
-        return ''.join(list(results)) # list(dict) gets the keys
+                        results.append(result)
+        if self._options.only_names:
+            results = self._dedup(results)
+        return ''.join(results)
+
+    def _dedup(self, results: List[str]) -> List[str]:
+        """
+        Remove duplicates.
+        """
+        d = {} # dictionary preserves insertion order; set does not.
+        for result in results:
+            d[result] = True
+        return list(d)  # list(dict) gets the keys
 
     def _matches(self, line: str) -> bool:
         if self._options.ignore_case:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 # -------------------------------------------------------------------
 
@@ -42,19 +42,14 @@ def grep(pattern: str, flags: str, files: List[str]) -> str:
     return _run(state)
 
 def _run(state: _State) -> str:
-    results = []
+    results: List[str] = []
     for file_name in state.files:
         with open(file_name) as f:
-            cnt = 0
-            # Doesn't work. (Because of the doctored File object they provide?)
-            # for line in f:
-            lines = f.readlines()
-            for line in lines:
-                cnt += 1
-                match = _matches(state, line)
-                result = _calc_result(state, match, line, cnt, file_name)
-                if result:
-                    results.append(result)
+            # lines is a list of tuples. Each tuple is (line number, line text).
+            # The line numbers start at 0.
+            lines = list(enumerate(f.readlines()))
+            matches = filter(lambda nxt: _matches(state, nxt[1]), lines)
+            results += list(map(lambda nxt: _fmt_match(state, nxt, file_name), matches))
     if state.options.only_names:
         results = _dedup(results)
     return ''.join(results)
@@ -77,18 +72,17 @@ def _matches(state: _State, line: str) -> bool:
         match = state.pattern in line
     return not match if state.options.invert else match
 
-def _calc_result(state: _State, match: bool, line: str, cnt: int, file_name: str) -> Optional[str]:
+def _fmt_match(state: _State, line_tuple: Tuple[int, str], file_name: str) -> str:
     """
-    Potentially save result, depending on the options.
+    Format result based on the options.
     """
-    result = None
-    if match:
-        if state.options.only_names:
-            return file_name + '\n'  # newline so that multiple lines work right
-        result = ''
-        if len(state.files) > 1:
-            result += f"{file_name}:"
-        if state.options.line_numbers:
-            result += f"{cnt}:"
-        result += line
+    if state.options.only_names:
+        return file_name + '\n' # newline so that multiple lines work right
+    (i, txt) = line_tuple
+    result = ''
+    if len(state.files) > 1:
+        result += f"{file_name}:"
+    if state.options.line_numbers:
+        result += f"{i + 1}:"
+    result += txt
     return result

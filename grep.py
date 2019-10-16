@@ -42,7 +42,7 @@ def grep(pattern: str, flags: str, files: List[str]) -> str:
     return _run(state)
 
 def _run(state: _State) -> str:
-    results = {} # dict gives us ordered keys, no dups
+    results = []
     for file_name in state.files:
         with open(file_name) as f:
             cnt = 0
@@ -54,8 +54,19 @@ def _run(state: _State) -> str:
                 match = _matches(state, line)
                 result = _calc_result(state, match, line, cnt, file_name)
                 if result:
-                    results[result] = True
-    return ''.join(list(results)) # list(dict) gets the keys
+                    results.append(result)
+    if state.options.only_names:
+        results = _dedup(results)
+    return ''.join(results)
+
+def _dedup(results: List[str]) -> List[str]:
+    """
+    Remove duplicates.
+    """
+    d = {} # dictionary preserves insertion order; set does not.
+    for result in results:
+        d[result] = True
+    return list(d) # list(dict) gets the keys
 
 def _matches(state: _State, line: str) -> bool:
     if state.options.ignore_case:

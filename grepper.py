@@ -20,7 +20,7 @@ class Grepper:
                 for line in lines:
                     cnt += 1
                     match = self._matches(line)
-                    result = self._calc_result(match, line, cnt, file_name)
+                    result = self._fmt(match, line, cnt, file_name)
                     if result:
                         results.append(result)
         if self._options.only_names:
@@ -40,17 +40,17 @@ class Grepper:
         if self._options.ignore_case:
             line = line.lower()
         if self._options.entire_lines:
-            return self._pattern == line
+            match = self._pattern == line
         else:
-            return self._pattern in line
+            match = self._pattern in line
+        return not match if self._options.invert else match
 
-    def _calc_result(self, match: bool, line: str, cnt: int, file_name: str) -> Optional[str]:
+    def _fmt(self, match: bool, line: str, cnt: int, file_name: str) -> Optional[str]:
         """
         Potentially save result, depending on the options.
         """
         result = None
-        # The invert option means we report what doesn't match.
-        if (match and not self._options.invert) or (not match and self._options.invert):
+        if match:
             if self._options.only_names:
                 return file_name + '\n'  # newline so that multiple lines work right
             result = ''
